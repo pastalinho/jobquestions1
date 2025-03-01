@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Career Compass - Find Your Perfect Job</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f9f9f9;
+        }
+        
+        h1, h2 {
+            color: #2c3e50;
+            text-align: center;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .question-container {
+            min-height: 200px;
+        }
+        
+        .result-container {
+            display: none;
+            min-height: 200px;
+        }
+        
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+            transition: background-color 0.3s;
+        }
+        
+        button:hover {
+            background-color: #2980b9;
+        }
+        
+        .progress-container {
+            width: 100%;
+            background-color: #e0e0e0;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        
+        .progress-bar {
+            width: 0%;
+            height: 10px;
+            background-color: #3498db;
+            border-radius: 10px;
+            transition: width 0.5s;
+        }
+        
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .option {
+            background-color: #f1f1f1;
+            padding: 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .option:hover {
+            background-color: #e0e0e0;
+        }
+        
+        .job-card {
+            background: white;
+            border-left: 5px solid #3498db;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .match-percentage {
+            font-weight: bold;
+            color: #3498db;
+        }
+        
+        .restart-btn {
+            display: block;
+            margin: 20px auto;
+            background-color: #2ecc71;
+        }
+        
+        .restart-btn:hover {
+            background-color: #27ae60;
+        }
+    </style>
+</head>
+<body>
+    <h1>Career Compass</h1>
+    <p class="card" style="text-align: center;">Answer a few questions to discover your ideal career path based on your preferences, skills, and interests.</p>
+    
+    <div class="progress-container">
+        <div class="progress-bar" id="progress"></div>
+    </div>
+    
+    <div class="card question-container" id="question-container">
+        <h2 id="question-title">Let's get started!</h2>
+        <p id="question-text">Click the button below to begin the career assessment.</p>
+        <div class="options" id="options-container">
+            <button id="start-btn">Start Assessment</button>
+        </div>
+    </div>
+    
+    <div class="card result-container" id="result-container">
+        <h2>Your Career Recommendations</h2>
+        <div id="results-list"></div>
+        <button class="restart-btn" id="restart-btn">Start Over</button>
+    </div>
+    
+    <script>
+        // Questions data
+        const questions = [
+            {
+                id: 1,
+                title: "Work Environment",
+                text: "What type of work environment do you prefer?",
+                options: [
+                    { text: "Office/Corporate setting", value: "office" },
+                    { text: "Remote/Work from home", value: "remote" },
+                    { text: "Outdoors/Active", value: "outdoors" },
+                    { text: "Creative studio/workshop", value: "creative" }
+                ]
+            },
+            {
+                id: 2,
+                title: "Skills & Strengths",
+                text: "Which of these skills do you enjoy using the most?",
+                options: [
+                    { text: "Communication and people skills", value: "people" },
+                    { text: "Analytical and problem-solving skills", value: "analytical" },
+                    { text: "Creative and artistic abilities", value: "creative" },
+                    { text: "Technical and hands-on skills", value: "technical" }
+                ]
+            },
+            {
+                id: 3,
+                title: "Working Style",
+                text: "How do you prefer to work?",
+                options: [
+                    { text: "Independently with minimal supervision", value: "independent" },
+                    { text: "Collaboratively as part of a team", value: "collaborative" },
+                    { text: "Leading and directing others", value: "leadership" },
+                    { text: "Structured environment with clear guidelines", value: "structured" }
+                ]
+            },
+            {
+                id: 4,
+                title: "Values & Motivation",
+                text: "What motivates you most in a job?",
+                options: [
+                    { text: "High income potential", value: "income" },
+                    { text: "Making a positive impact", value: "impact" },
+                    { text: "Learning and growth opportunities", value: "growth" },
+                    { text: "Work-life balance and stability", value: "balance" }
+                ]
+            },
+            {
+                id: 5,
+                title: "Education & Training",
+                text: "What is your preferred level of education or training?",
+                options: [
+                    { text: "High school diploma or equivalent", value: "highschool" },
+                    { text: "Associate's degree or technical certification", value: "associate" },
+                    { text: "Bachelor's degree", value: "bachelor" },
+                    { text: "Advanced degree (Master's, PhD, etc.)", value: "advanced" }
+                ]
+            }
+        ];
+        
+        // Jobs database with match criteria
+        const jobs = [
+            {
+                title: "Software Developer",
+                description: "Design, develop, and maintain software applications and systems.",
+                salary: "$70,000 - $150,000",
+                criteria: {
+                    environment: ["office", "remote"],
+                    skills: ["analytical", "technical"],
+                    workStyle: ["independent", "collaborative"],
+                    motivation: ["income", "growth"],
+                    education: ["bachelor", "associate", "advanced"]
+                }
+            },
+            {
+                title: "Marketing Manager",
+                description: "Develop and implement marketing strategies to promote products or services.",
+                salary: "$60,000 - $120,000",
+                criteria: {
+                    environment: ["office", "remote"],
+                    skills: ["people", "creative"],
+                    workStyle: ["leadership", "collaborative"],
+                    motivation: ["growth", "income"],
+                    education: ["bachelor", "advanced"]
+                }
+            },
+            {
+                title: "Landscape Architect",
+                description: "Design outdoor spaces and environments for functionality, aesthetics, and harmony with nature.",
+                salary: "$65,000 - $110,000",
+                criteria: {
+                    environment: ["outdoors", "office", "creative"],
+                    skills: ["creative", "technical"],
+                    workStyle: ["independent", "collaborative"],
+                    motivation: ["impact", "growth"],
+                    education: ["bachelor", "advanced"]
+                }
+            },
+            {
+                title: "Registered Nurse",
+                description: "Provide patient care, administer treatments, and educate patients about health conditions.",
+                salary: "$60,000 - $100,000",
+                criteria: {
+                    environment: ["office"],
+                    skills: ["people", "technical"],
+                    workStyle: ["collaborative", "structured"],
+                    motivation: ["impact", "balance"],
+                    education: ["associate", "bachelor", "advanced"]
+                }
+            },
+            {
+                title: "Financial Analyst",
+                description: "Analyze financial data and provide guidance for business and investment decisions.",
+                salary: "$65,000 - $115,000",
+                criteria: {
+                    environment: ["office", "remote"],
+                    skills: ["analytical"],
+                    workStyle: ["independent", "structured"],
+                    motivation: ["income", "growth"],
+                    education: ["bachelor", "advanced"]
+                }
+            },
+            {
+                title: "Graphic Designer",
+                description: "Create visual concepts to communicate ideas that inspire, inform, or captivate consumers.",
+                salary: "$45,000 - $85,000",
+                criteria: {
+                    environment: ["creative", "remote", "office"],
+                    skills: ["creative"],
+                    workStyle: ["independent", "collaborative"],
+                    motivation: ["growth", "balance"],
+                    education: ["associate", "bachelor"]
+                }
+            },
+            {
+                title: "Electrician",
+                description: "Install, maintain, and repair electrical systems in homes, businesses, and factories.",
+                salary: "$50,000 - $90,000",
+                criteria: {
+                    environment: ["outdoors"],
+                    skills: ["technical"],
+                    workStyle: ["independent", "structured"],
+                    motivation: ["income", "balance"],
+                    education: ["highschool", "associate"]
+                }
+            },
+            {
+                title: "Elementary School Teacher",
+                description: "Educate young students in basic subjects and social skills development.",
+                salary: "$45,000 - $75,000",
+                criteria: {
+                    environment: ["office"],
+                    skills: ["people"],
+                    workStyle: ["leadership", "structured"],
+                    motivation: ["impact", "balance"],
+                    education: ["bachelor", "advanced"]
+                }
+            },
+            {
+                title: "Physical Therapist",
+                description: "Help patients improve movement and manage pain after injuries or illnesses.",
+                salary: "$70,000 - $100,000",
+                criteria: {
+                    environment: ["office"],
+                    skills: ["people", "technical"],
+                    workStyle: ["independent", "collaborative"],
+                    motivation: ["impact", "growth"],
+                    education: ["advanced"]
+                }
+            },
+            {
+                title: "Chef",
+                description: "Prepare, cook, and present food in various settings from restaurants to private homes.",
+                salary: "$40,000 - $90,000",
+                criteria: {
+                    environment: ["creative"],
+                    skills: ["creative", "technical"],
+                    workStyle: ["leadership", "structured"],
+                    motivation: ["growth", "balance"],
+                    education: ["highschool", "associate"]
+                }
+            },
+            {
+                title: "Sales Representative",
+                description: "Sell products and services directly to consumers or businesses.",
+                salary: "$40,000 - $100,000+",
+                criteria: {
+                    environment: ["office", "remote"],
+                    skills: ["people"],
+                    workStyle: ["independent", "leadership"],
+                    motivation: ["income"],
+                    education: ["highschool", "associate", "bachelor"]
+                }
+            },
+            {
+                title: "Social Media Manager",
+                description: "Develop and implement social media strategies to increase brand awareness and engagement.",
+                salary: "$45,000 - $80,000",
+                criteria: {
+                    environment: ["office", "remote"],
+                    skills: ["creative", "people"],
+                    workStyle: ["independent", "collaborative"],
+                    motivation: ["growth", "balance"],
+                    education: ["associate", "bachelor"]
+                }
+            },
+            {
+                title: "Data Scientist",
+                description: "Analyze and interpret complex data to help organizations make better decisions.",
+                salary: "$80,000 - $150,000",
+                criteria: {
+                    environment: ["office", "remote"],
+                    skills: ["analytical", "technical"],
+                    workStyle: ["independent", "structured"],
+                    motivation: ["income", "growth"],
+                    education: ["bachelor", "advanced"]
+                }
+            },
+            {
+                title: "Construction Manager",
+                description: "Plan, coordinate, budget, and supervise construction projects from start to finish.",
+                salary: "$70,000 - $120,000",
+                criteria: {
+                    environment: ["outdoors"],
+                    skills: ["technical", "people"],
+                    workStyle: ["leadership", "structured"],
+                    motivation: ["income", "balance"],
+                    education: ["associate", "bachelor"]
+                }
+            },
+            {
+                title: "UX/UI Designer",
+                description: "Design user-friendly interfaces and improve user experience for websites and applications.",
+                salary: "$60,000 - $110,000",
+                criteria: {
+                    environment: ["creative", "remote", "office"],
+                    skills: ["creative", "analytical"],
+                    workStyle: ["collaborative", "independent"],
+                    motivation: ["growth", "impact"],
+                    education: ["associate", "bachelor"]
+                }
+            }
+        ];
+        
+        // Variables to store application state
+        let currentQuestion = 0;
+        const userAnswers = {
+            environment: "",
+            skills: "",
+            workStyle: "",
+            motivation: "",
+            education: ""
+        };
+        
+        // DOM elements
+        const questionContainer = document.getElementById('question-container');
+        const resultContainer = document.getElementById('result-container');
+        const questionTitle = document.getElementById('question-title');
+        const questionText = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        const progressBar = document.getElementById('progress');
+        const resultsList = document.getElementById('results-list');
+        const startBtn = document.getElementById('start-btn');
+        const restartBtn = document.getElementById('restart-btn');
+        
+        // Initialize the application
+        startBtn.addEventListener('click', startAssessment);
+        restartBtn.addEventListener('click', restartAssessment);
+        
+        function startAssessment() {
+            currentQuestion = 0;
+            showQuestion(questions[currentQuestion]);
+            updateProgress();
+        }
+        
+        function showQuestion(question) {
+            questionTitle.textContent = question.title;
+            questionText.textContent = question.text;
+            
+            // Clear options
+            optionsContainer.innerHTML = '';
+            
+            // Add new options
+            question.options.forEach(option => {
+                const optionElement = document.createElement('div');
+                optionElement.className = 'option';
+                optionElement.textContent = option.text;
+                optionElement.addEventListener('click', () => selectOption(option.value));
+                optionsContainer.appendChild(optionElement);
+            });
+        }
+        
+        function selectOption(value) {
+            // Store the answer
+            const categories = ['environment', 'skills', 'workStyle', 'motivation', 'education'];
+            userAnswers[categories[currentQuestion]] = value;
+            
+            // Move to next question or show results
+            currentQuestion++;
+            
+            if (currentQuestion < questions.length) {
+                showQuestion(questions[currentQuestion]);
+            } else {
+                showResults();
+            }
+            
+            updateProgress();
+        }
+        
+        function updateProgress() {
+            const percentage = (currentQuestion / questions.length) * 100;
+            progressBar.style.width = `${percentage}%`;
+        }
+        
+        function showResults() {
+            // Calculate job matches
+            const jobMatches = calculateJobMatches();
+            
+            // Display results
+            questionContainer.style.display = 'none';
+            resultContainer.style.display = 'block';
+            
+            // Clear previous results
+            resultsList.innerHTML = '';
+            
+            // Add job recommendations
+            jobMatches.forEach(job => {
+                const jobElement = document.createElement('div');
+                jobElement.className = 'job-card';
+                jobElement.innerHTML = `
+                    <h3>${job.title} <span class="match-percentage">(${job.matchPercentage}% Match)</span></h3>
+                    <p>${job.description}</p>
+                    <p><strong>Salary Range:</strong> ${job.salary}</p>
+                `;
+                resultsList.appendChild(jobElement);
+            });
+        }
+        
+        function calculateJobMatches() {
+            const categories = ['environment', 'skills', 'workStyle', 'motivation', 'education'];
+            
+            // Calculate match percentage for each job
+            const jobsWithScores = jobs.map(job => {
+                let matchCount = 0;
+                
+                categories.forEach(category => {
+                    if (job.criteria[category].includes(userAnswers[category])) {
+                        matchCount++;
+                    }
+                });
+                
+                const matchPercentage = Math.round((matchCount / categories.length) * 100);
+                
+                return {
+                    ...job,
+                    matchPercentage
+                };
+            });
+            
+            // Sort by match percentage (highest first)
+            return jobsWithScores
+                .sort((a, b) => b.matchPercentage - a.matchPercentage)
+                .slice(0, 5); // Return top 5 matches
+        }
+        
+        function restartAssessment() {
+            // Reset the assessment
+            resultContainer.style.display = 'none';
+            questionContainer.style.display = 'block';
+            
+            // Clear user answers
+            Object.keys(userAnswers).forEach(key => {
+                userAnswers[key] = "";
+            });
+            
+            // Show start screen
+            questionTitle.textContent = "Let's get started!";
+            questionText.textContent = "Click the button below to begin the career assessment.";
+            optionsContainer.innerHTML = '';
+            optionsContainer.appendChild(startBtn);
+            
+            // Reset progress
+            progressBar.style.width = '0%';
+        }
+    </script>
+</body>
+</html>
